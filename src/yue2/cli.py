@@ -183,10 +183,27 @@ def batch(args):
     return int(failures > 0)
 
 
+def serve(args):
+    try:
+        import uvicorn
+    except ImportError:
+        raise SystemExit("Install the serve extra first: pip install 'yue2-infer[serve]'")
+    from .service import ServiceConfig, create_app
+    model, vae = model_paths(args)
+    config = ServiceConfig(model=model, vae=vae, revision=args.revision,
+                           vae_revision=args.vae_revision, device=args.device,
+                           budget=args.budget, backend=args.backend,
+                           quantization=args.quantization, offload_ar=args.offload_ar,
+                           offline=args.offline,
+                           output_dir=Path(args.output or "runs/service"),
+                           generation_config=json.loads(Path(args.config).read_text()) if args.config else None)
+    uvicorn.run(create_app(config), host=args.host, port=args.port)
+
+
 def parser():
     p = argparse.ArgumentParser(description="YuE2: style + lyrics → symbolic plan → song")
     sub = p.add_subparsers(dest="command", required=True)
-    for name in ("doctor", "generate", "batch"):
+    for name in ("doctor", "generate", "batch", "serve"):
         q = sub.add_parser(name)
         q.add_argument("--model")
         q.add_argument("--vae", default="standard", help="standard (listening), legacy (paper evaluation), local path or HF repo")
@@ -202,6 +219,9 @@ def parser():
         q.add_argument("--output")
         if name == "doctor":
             q.add_argument("--verify-hashes", action="store_true")
+        elif name == "serve":
+            q.add_argument("--host", default="127.0.0.1")
+            q.add_argument("--port", type=int, default=8000)
         else:
             q.add_argument("--cot", choices=("full", "melody", "off"))
             q.add_argument("--resume", action="store_true")
@@ -226,7 +246,7 @@ def parser():
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     args = parser().parse_args(argv)
-    return {"doctor": doctor, "generate": generate, "batch": batch}[args.command](args)
+    return {"doctor": doctor, "generate": generate, "batch": batch, "serve": serve}[args.command](args)
 
 
 if __name__ == "__main__":

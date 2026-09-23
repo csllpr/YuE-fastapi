@@ -125,6 +125,10 @@ with YuE2Pipeline.from_pretrained("m-a-p/YuE2-3B", device="cuda") as pipe:
 
 [Generation guide](docs/generation.md) · [Original example inputs](examples/README.md) · [v0.1.6 wheel archive](https://github.com/multimodal-art-projection/YuE/releases/download/yue2-v0.1.6/yue2_infer-0.1.6-py3-none-any.whl)
 
+### HTTP API
+
+`pip install 'yue2-infer[serve]'` adds a `yue2 serve` subcommand: a FastAPI app with queued jobs, cancellation, and artifact download over HTTP. See [docs/service.md](docs/service.md).
+
 ## Cover a song
 
 Transcribe a source recording with **[🤗 SheetSage2](https://huggingface.co/m-a-p/SheetSage2)**, review its melody ABC, and provide new lyrics or a target style. For covers, use **`cot="melody"` and a score without chord symbols** so the accompaniment can adapt to the new style.
